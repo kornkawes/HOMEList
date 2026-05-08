@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ระบบจัดการรายการบ้านลูกค้า</title>
+    <!-- โหลด Tailwind CSS สำหรับการตกแต่งแบบรวดเร็วและสวยงาม -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- โหลด Font Awesome สำหรับไอคอนต่างๆ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- โหลดฟอนต์ Prompt จาก Google Fonts ให้ดูสวยงามอ่านง่าย -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ตั้งค่าฟอนต์หลักเป็น Prompt */
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #f3f4f6; /* สีพื้นหลังอ่อนๆ */
+            -webkit-tap-highlight-color: transparent; /* เอาไฮไลท์เวลาแตะออกบนมือถือ */
+        }
+        
+        /* สไตล์สำหรับซ่อน scrollbar แต่ยังเลื่อนได้ */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* อนิเมชั่นสำหรับการแสดงผลแบบเลื่อนขึ้น */
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-slide-up {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+
+        /* อนิเมชั่นสำหรับการเฟด */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+        
+        /* สไตล์สำหรับ input เพื่อป้องกันการซูมบนมือถือ iOS */
+        input, select, textarea {
+            font-size: 16px !important;
+        }
+    </style>
+</head>
+<body class="text-gray-800 pb-20"> <!-- เว้นระยะด้านล่างสำหรับปุ่มเพิ่มข้อมูล (ถ้ามีในอนาคต) -->
+
+    <header class="bg-blue-600 text-white shadow-md sticky top-0 z-10">
+        <div class="px-4 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-semibold"><i class="fa-solid fa-house-chimney mr-2"></i> รายการบ้าน</h1>
+            <!-- ปุ่มเปิด Modal เพิ่มข้อมูล -->
+            <button onclick="openAddModal()" class="bg-white text-blue-600 rounded-full w-8 h-8 flex items-center justify-center shadow-sm hover:bg-blue-50 active:scale-95 transition-transform">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+        
+        <!-- ส่วนสรุปข้อมูลสั้นๆ -->
+        <div class="bg-blue-700 px-4 py-2 text-xs text-blue-100 flex justify-between">
+            <span>รวม: <span id="totalItems" class="font-bold">0</span> รายการ</span>
+        </div>
+    </header>
+
+    <main class="p-4" id="listContainer">
+        <!-- รายการจะถูกสร้างขึ้นด้วย JavaScript และแทรกลงที่นี่ -->
+        
+        <!-- ข้อความกรณีไม่มีข้อมูล -->
+        <div id="emptyState" class="hidden flex flex-col items-center justify-center mt-20 text-gray-400">
+            <i class="fa-solid fa-folder-open text-5xl mb-3"></i>
+            <p>ยังไม่มีรายการบ้าน</p>
+            <p class="text-sm">กดปุ่ม + ด้านบนเพื่อเพิ่มข้อมูล</p>
+        </div>
+    </main>
+
+    <div id="formModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex flex-col justify-end sm:justify-center">
+        <!-- พื้นหลังคลิกเพื่อปิด -->
+        <div class="absolute inset-0" onclick="closeModal('formModal')"></div>
+        
+        <!-- ตัวกล่อง Modal -->
+        <div class="bg-white rounded-t-2xl sm:rounded-2xl sm:m-4 sm:max-w-md sm:mx-auto w-full relative z-10 animate-slide-up sm:animate-fade-in shadow-2xl">
+            <!-- แถบด้านบนของ Modal (ลากลงเพื่อปิดบนมือถือ - สไตล์หลอกๆ) -->
+            <div class="w-full flex justify-center pt-3 pb-1 sm:hidden">
+                <div class="w-12 h-1.5 bg-gray-300 rounded-full"></div>
+            </div>
+            
+            <div class="px-5 py-4 border-b border-gray-100 flex justify-between items-center">
+                <h2 id="modalTitle" class="text-lg font-semibold text-gray-800">เพิ่มรายการใหม่</h2>
+                <button onclick="closeModal('formModal')" class="text-gray-400 hover:text-gray-600 p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- ฟอร์มรับข้อมูล -->
+            <form id="propertyForm" class="p-5 overflow-y-auto max-h-[80vh] no-scrollbar">
+                <input type="hidden" id="editId">
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ชื่อลูกค้า <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <input type="text" id="customerName" required class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="เช่น คุณสมชาย">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">หมู่บ้าน / พื้นที่ <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-location-dot"></i>
+                        </div>
+                        <input type="text" id="location" required class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="เช่น ม.เพอร์เฟค พาร์ค / บางบัวทอง">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ราคา (บาท) <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-tag"></i>
+                        </div>
+                        <input type="number" id="price" required class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="เช่น 3500000">
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">เบอร์โทรศัพท์ <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-phone"></i>
+                        </div>
+                        <input type="tel" id="phone" required class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="เช่น 0812345678">
+                    </div>
+                </div>
+                
+                <div class="mb-5">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">ลิงก์ต้นทาง (ถ้ามี)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fa-solid fa-link"></i>
+                        </div>
+                        <input type="url" id="sourceLink" class="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" placeholder="https://...">
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-blue-600 text-white font-medium py-3 rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-md">
+                    บันทึกข้อมูล
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0" onclick="closeModal('deleteModal')"></div>
+        <div class="bg-white rounded-xl max-w-sm w-full p-6 relative z-10 animate-fade-in shadow-2xl text-center">
+            <div class="w-16 h-16 rounded-full bg-red-100 text-red-500 flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">ยืนยันการลบข้อมูล?</h3>
+            <p class="text-gray-500 mb-6 text-sm">คุณกำลังจะลบรายการบ้านของ <strong id="deleteCustomerName" class="text-gray-800"></strong> การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+            
+            <div class="flex space-x-3">
+                <button onclick="closeModal('deleteModal')" class="flex-1 py-2.5 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 active:bg-gray-300 transition-colors">
+                    ยกเลิก
+                </button>
+                <button id="confirmDeleteBtn" class="flex-1 py-2.5 bg-red-500 text-white font-medium rounded-lg hover:bg-red-600 active:bg-red-700 transition-colors shadow-md shadow-red-500/30">
+                    ลบข้อมูล
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed top-16 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-full shadow-lg z-50 text-sm font-medium transition-all duration-300 opacity-0 pointer-events-none translate-y-[-20px]">
+        <span id="toastMessage">แจ้งเตือน</span>
+    </div>
+
+    <script>
+        // คีย์สำหรับเก็บข้อมูลใน localStorage
+        const STORAGE_KEY = 'property_listings_data';
+        
+        // ตัวแปรเก็บข้อมูลทั้งหมด
+        let properties = [];
+        
+        // ตัวแปรสำหรับเก็บ ID ที่กำลังจะลบ
+        let itemToDeleteId = null;
+
+        // ฟังก์ชันจัดรูปแบบตัวเลขราคาให้มีคอมม่า
+        function formatNumber(num) {
+            return num.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1,');
+        }
+
+        // โหลดข้อมูลจาก LocalStorage
+        function loadData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                try {
+                    properties = JSON.parse(data);
+                } catch (e) {
+                    console.error("Error parsing local storage data", e);
+                    properties = [];
+                }
+            } else {
+                // ข้อมูลตัวอย่างสำหรับใช้ครั้งแรก (เอาออกได้ถ้าไม่ต้องการ)
+                /*
+                properties = [
+                    { id: Date.now().toString(), name: "คุณวิชาญ", location: "ม.ลดาวัลย์ ปิ่นเกล้า", price: "12500000", phone: "0819998888", link: "", date: new Date().toISOString() }
+                ];
+                saveData();
+                */
+            }
+            renderList();
+        }
+
+        // บันทึกข้อมูลลง LocalStorage
+        function saveData() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(properties));
+            renderList(); // อัปเดตหน้าจอทันทีเมื่อบันทึก
+        }
+
+        // สร้างการ์ดแสดงผลทีละรายการ
+        function createPropertyCard(property) {
+            // เช็คว่ามีลิงก์หรือไม่ ถ้ามีให้สร้างปุ่ม ถ้าไม่มีให้ซ่อน
+            const linkButton = property.link ? 
+                `<a href="${property.link}" target="_blank" rel="noopener noreferrer" class="flex items-center justify-center px-3 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 active:bg-gray-300 transition-colors">
+                    <i class="fa-solid fa-arrow-up-right-from-square mr-1.5"></i> ลิงก์
+                </a>` : '';
+
+            // วันที่บันทึก
+            const dateObj = new Date(property.date);
+            const dateStr = `${dateObj.getDate().toString().padStart(2, '0')}/${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${dateObj.getFullYear() + 543}`;
+
+            // คืนค่าเป็น HTML ของการ์ด
+            return `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-3 animate-fade-in relative overflow-hidden group">
+                    <!-- แถบสีด้านซ้ายตกแต่ง -->
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>
+                    
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-gray-800 text-lg leading-tight">${property.name}</h3>
+                            <p class="text-xs text-gray-400 mt-0.5"><i class="fa-regular fa-calendar-plus mr-1"></i> ${dateStr}</p>
+                        </div>
+                        
+                        <!-- เมนูจัดการ (แก้ไข/ลบ) -->
+                        <div class="flex space-x-1">
+                            <button onclick="openEditModal('${property.id}')" class="w-8 h-8 rounded-full text-gray-400 hover:text-blue-500 hover:bg-blue-50 flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="confirmDelete('${property.id}', '${property.name}')" class="w-8 h-8 rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition-colors">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- ข้อมูลรายละเอียด -->
+                    <div class="space-y-2 mt-3 mb-4">
+                        <div class="flex items-start">
+                            <div class="w-6 text-gray-400 mt-0.5 text-center"><i class="fa-solid fa-location-dot"></i></div>
+                            <div class="text-gray-700 flex-1 leading-snug">${property.location}</div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-6 text-gray-400 text-center"><i class="fa-solid fa-tag"></i></div>
+                            <div class="text-blue-600 font-bold">฿ ${formatNumber(property.price)}</div>
+                        </div>
+                    </div>
+                    
+                    <!-- ปุ่ม Action -->
+                    <div class="flex space-x-2 pt-3 border-t border-gray-50">
+                        <!-- ปุ่มโทร (ใช้ href="tel:...") -->
+                        <a href="tel:${property.phone}" class="flex-1 flex items-center justify-center px-3 py-2 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-600 active:bg-green-700 transition-colors shadow-sm shadow-green-500/20">
+                            <i class="fa-solid fa-phone mr-1.5"></i> โทร: ${property.phone}
+                        </a>
+                        ${linkButton}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ฟังก์ชันวาดรายการทั้งหมดลงบนจอ
+        function renderList() {
+            const container = document.getElementById('listContainer');
+            const emptyState = document.getElementById('emptyState');
+            const totalItems = document.getElementById('totalItems');
+            
+            totalItems.innerText = properties.length;
+
+            if (properties.length === 0) {
+                // ซ่อนการ์ดทั้งหมด แสดงรูปตอนไม่มีข้อมูล
+                Array.from(container.children).forEach(child => {
+                    if (child.id !== 'emptyState') child.remove();
+                });
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                
+                // เคลียร์ของเก่า (ยกเว้น emptyState)
+                Array.from(container.children).forEach(child => {
+                    if (child.id !== 'emptyState') child.remove();
+                });
+                
+                // เรียงจากใหม่ไปเก่า
+                const sortedProperties = [...properties].sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                // สร้าง HTML และแทรก
+                let html = '';
+                sortedProperties.forEach(prop => {
+                    html += createPropertyCard(prop);
+                });
+                
+                // แทรกลงในคอนเทนเนอร์ ก่อนหน้า emptyState
+                container.insertAdjacentHTML('afterbegin', html);
+            }
+        }
+
+        // จัดการเมื่อกด submit ฟอร์ม
+        document.getElementById('propertyForm').addEventListener('submit', function(e) {
+            e.preventDefault(); // ป้องกันการรีเฟรชหน้า
+            
+            const id = document.getElementById('editId').value;
+            const name = document.getElementById('customerName').value;
+            const location = document.getElementById('location').value;
+            const price = document.getElementById('price').value;
+            const phone = document.getElementById('phone').value;
+            const link = document.getElementById('sourceLink').value;
+            
+            if (id) {
+                // โหมดแก้ไข
+                const index = properties.findIndex(p => p.id === id);
+                if (index !== -1) {
+                    properties[index] = {
+                        ...properties[index], // เก็บวันที่เดิมไว้
+                        name, location, price, phone, link
+                    };
+                    showToast('อัปเดตข้อมูลเรียบร้อย');
+                }
+            } else {
+                // โหมดเพิ่มใหม่
+                const newProperty = {
+                    id: Date.now().toString(), // สร้าง ID ไม่ซ้ำจากเวลา
+                    name, location, price, phone, link,
+                    date: new Date().toISOString()
+                };
+                properties.push(newProperty);
+                showToast('เพิ่มรายการใหม่เรียบร้อย');
+            }
+            
+            saveData();
+            closeModal('formModal');
+        });
+
+        // เปิด Modal เพิ่มข้อมูล
+        function openAddModal() {
+            document.getElementById('propertyForm').reset(); // ล้างข้อมูลเดิม
+            document.getElementById('editId').value = '';
+            document.getElementById('modalTitle').innerText = 'เพิ่มรายการใหม่';
+            
+            const modal = document.getElementById('formModal');
+            modal.classList.remove('hidden');
+            
+            // ป้องกัน body สกอร์ลซ้อนกัน
+            document.body.style.overflow = 'hidden';
+        }
+
+        // เปิด Modal แก้ไขข้อมูล
+        function openEditModal(id) {
+            const property = properties.find(p => p.id === id);
+            if (!property) return;
+            
+            document.getElementById('editId').value = property.id;
+            document.getElementById('customerName').value = property.name;
+            document.getElementById('location').value = property.location;
+            document.getElementById('price').value = property.price;
+            document.getElementById('phone').value = property.phone;
+            document.getElementById('sourceLink').value = property.link || '';
+            
+            document.getElementById('modalTitle').innerText = 'แก้ไขรายการ';
+            
+            const modal = document.getElementById('formModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // ปิด Modal (ใช้ร่วมกัน)
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('hidden');
+            document.body.style.overflow = ''; // คืนค่าการสกอร์ล
+        }
+
+        // เปิด Modal ยืนยันการลบ
+        function confirmDelete(id, name) {
+            itemToDeleteId = id;
+            document.getElementById('deleteCustomerName').innerText = name;
+            
+            const modal = document.getElementById('deleteModal');
+            modal.classList.remove('hidden');
+        }
+
+        // กดปุ่มยืนยันการลบ
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (itemToDeleteId) {
+                // กรองเอาตัวที่ ID ไม่ตรงกับที่จะลบไว้ (ลบตัวที่ตรงทิ้ง)
+                properties = properties.filter(p => p.id !== itemToDeleteId);
+                saveData();
+                closeModal('deleteModal');
+                showToast('ลบรายการเรียบร้อยแล้ว');
+                itemToDeleteId = null;
+            }
+        });
+
+        let toastTimeout;
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = message;
+            
+            // แสดง
+            toast.classList.remove('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+            toast.classList.add('opacity-100', 'translate-y-0');
+            
+            // เคลียร์ timeout เก่าถ้ามี
+            clearTimeout(toastTimeout);
+            
+            // ซ่อนอัตโนมัติหลังจาก 3 วินาที
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'translate-y-[-20px]', 'pointer-events-none');
+            }, 3000);
+        }
+
+        // เมื่อหน้าเว็บโหลดเสร็จ ให้ดึงข้อมูลมาแสดง
+        window.addEventListener('DOMContentLoaded', () => {
+            loadData();
+        });
+
+    </script>
+</body>
+</html>
