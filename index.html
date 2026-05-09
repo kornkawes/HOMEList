@@ -10,7 +10,7 @@
     
     <script>
         tailwind.config = {
-            darkMode: 'class', // เปิดระบบ Dark Mode แบบใช้ Class
+            darkMode: 'class',
             theme: {
                 extend: {
                     fontFamily: {
@@ -54,7 +54,6 @@
         .skeleton-pulse { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         
-        /* Glassmorphism Light Mode */
         .glass-panel {
             background: rgba(255, 255, 255, 0.65);
             backdrop-filter: blur(16px);
@@ -69,9 +68,8 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.6);
         }
 
-        /* Glassmorphism Dark Mode */
         .dark .glass-panel {
-            background: rgba(15, 23, 42, 0.55); /* slate-900 */
+            background: rgba(15, 23, 42, 0.55);
             border: 1px solid rgba(255, 255, 255, 0.08);
             box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
         }
@@ -80,12 +78,10 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Status Badges */
         .status-sale { background: rgba(220, 252, 231, 0.8); color: #166534; border: 1px solid rgba(187, 247, 208, 0.8); }
         .status-rent { background: rgba(219, 234, 254, 0.8); color: #1e40af; border: 1px solid rgba(191, 219, 254, 0.8); }
         .status-other { background: rgba(243, 244, 246, 0.8); color: #374151; border: 1px solid rgba(229, 231, 235, 0.8); }
         
-        /* Dark Mode Status Badges */
         .dark .status-sale { background: rgba(6, 78, 59, 0.4); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
         .dark .status-rent { background: rgba(30, 58, 138, 0.4); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
         .dark .status-other { background: rgba(55, 65, 81, 0.4); color: #d1d5db; border: 1px solid rgba(107, 114, 128, 0.3); }
@@ -93,20 +89,16 @@
 </head>
 <body class="bg-[#f8fafc] dark:bg-slate-950 text-slate-800 dark:text-slate-200 pb-10 relative min-h-screen overflow-x-hidden transition-colors duration-300">
 
-    <!-- Animated Background Blobs -->
     <div class="fixed inset-0 z-[-1] overflow-hidden pointer-events-none transition-opacity duration-300">
-        <!-- Light Mode Blobs -->
         <div class="dark:hidden absolute top-[-10%] left-[-10%] w-96 h-96 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob"></div>
         <div class="dark:hidden absolute top-[20%] right-[-10%] w-96 h-96 bg-cyan-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob animation-delay-2000"></div>
         <div class="dark:hidden absolute bottom-[-20%] left-[20%] w-96 h-96 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-40 animate-blob animation-delay-4000"></div>
         
-        <!-- Dark Mode Blobs (Subtle) -->
         <div class="hidden dark:block absolute top-[-10%] left-[-10%] w-96 h-96 bg-indigo-900 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-blob"></div>
         <div class="hidden dark:block absolute top-[20%] right-[-10%] w-96 h-96 bg-emerald-900 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
         <div class="hidden dark:block absolute bottom-[-20%] left-[20%] w-96 h-96 bg-fuchsia-900 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
     </div>
 
-    <!-- Header & Search (Glass) -->
     <header class="glass-header sticky top-0 z-20 shadow-sm transition-colors duration-300">
         <div class="px-5 py-4 flex justify-between items-center">
             <div class="flex items-center gap-3">
@@ -119,7 +111,6 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <!-- Dark Mode Toggle Button -->
                 <button onclick="toggleDarkMode()" class="bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 rounded-full w-10 h-10 flex items-center justify-center transition-all border border-slate-200 dark:border-slate-700 shadow-sm text-slate-600 dark:text-slate-300">
                     <i id="themeIcon" class="fa-solid fa-moon"></i>
                 </button>
@@ -129,7 +120,6 @@
             </div>
         </div>
         
-        <!-- Search Bar -->
         <div class="px-5 pb-4">
             <div class="relative bg-white/50 dark:bg-slate-800/50 rounded-2xl border border-white dark:border-slate-700 shadow-inner overflow-hidden flex items-center focus-within:bg-white/80 dark:focus-within:bg-slate-800 transition-colors focus-within:ring-2 focus-within:ring-slate-900/10 dark:focus-within:ring-white/10">
                 <div class="pl-4 text-slate-400 dark:text-slate-500">
@@ -142,7 +132,6 @@
             </div>
         </div>
         
-        <!-- Status Bar -->
         <div class="px-5 py-2.5 bg-slate-900/5 dark:bg-white/5 border-t border-white/40 dark:border-white/5 flex justify-between items-center backdrop-blur-md">
             <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Showing <span id="itemCount" class="font-bold text-slate-800 dark:text-white text-sm">0</span> listings</span>
             <button onclick="fetchData(true)" class="flex items-center text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-slate-800/60 hover:bg-white dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg transition-all text-xs font-semibold shadow-sm border border-slate-200 dark:border-slate-700">
@@ -151,10 +140,8 @@
         </div>
     </header>
 
-    <!-- Content Area -->
     <main class="p-4 relative" id="mainContent">
         
-        <!-- Warning -->
         <div id="setupWarning" class="glass-panel rounded-2xl p-4 mb-5 hidden animate-fade-in flex items-start border-l-4 border-l-amber-400">
             <div class="bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 w-8 h-8 rounded-full flex items-center justify-center mr-3 shrink-0 shadow-sm">
                 <i class="fa-solid fa-link"></i>
@@ -165,7 +152,6 @@
             </div>
         </div>
 
-        <!-- Skeleton -->
         <div id="loadingState" class="space-y-4 hidden">
             <div class="glass-panel rounded-3xl p-5 skeleton-pulse">
                 <div class="h-5 bg-slate-200/60 dark:bg-slate-700/60 rounded-md w-1/3 mb-4"></div>
@@ -181,10 +167,8 @@
             </div>
         </div>
 
-        <!-- รายการ -->
         <div id="listContainer" class="space-y-4"></div>
         
-        <!-- Empty -->
         <div id="emptyState" class="hidden flex flex-col items-center justify-center py-20 animate-fade-in">
             <div class="w-20 h-20 bg-white/50 dark:bg-slate-800/50 rounded-full flex items-center justify-center shadow-inner mb-4">
                 <i class="fa-solid fa-box-open text-3xl text-slate-300 dark:text-slate-600"></i>
@@ -195,18 +179,15 @@
 
     </main>
 
-    <!-- Modal รายละเอียด (Glassmorphism) -->
     <div id="detailsModal" class="fixed inset-0 z-50 hidden flex flex-col justify-end transition-opacity">
         <div class="absolute inset-0 bg-slate-900/20 dark:bg-slate-900/60 backdrop-blur-sm transition-colors" onclick="closeModal('detailsModal')"></div>
         
         <div class="glass-panel bg-white/80 dark:bg-slate-900/90 rounded-t-[32px] w-full relative z-10 animate-slide-up shadow-2xl flex flex-col h-[88vh] border-t border-white dark:border-slate-700 transition-colors">
             
-            <!-- Handle -->
             <div class="w-full flex justify-center pt-4 pb-2 shrink-0">
                 <div class="w-12 h-1.5 bg-slate-300/80 dark:bg-slate-600/80 rounded-full"></div>
             </div>
             
-            <!-- Header Modal -->
             <div class="px-6 py-3 border-b border-slate-200/50 dark:border-slate-800/50 flex justify-between items-start shrink-0">
                 <div class="pr-4">
                     <span id="detailStatus" class="inline-block px-2.5 py-1 rounded-md text-[10px] font-bold mb-1.5 status-other tracking-wider uppercase shadow-sm">STATUS</span>
@@ -222,17 +203,14 @@
                 </button>
             </div>
             
-            <!-- Scrollable Content -->
             <div class="p-6 overflow-y-auto no-scrollbar flex-1 pb-28">
                 
-                <!-- Price Zone -->
                 <div class="bg-gradient-to-br from-slate-900 to-slate-800 dark:from-indigo-900 dark:to-slate-900 p-6 rounded-3xl mb-6 relative overflow-hidden shadow-xl shadow-slate-900/10 dark:shadow-none border border-transparent dark:border-indigo-500/20">
                     <div class="absolute -right-4 -top-4 text-white/5 dark:text-white/5 text-8xl transform rotate-12"><i class="fa-solid fa-tags"></i></div>
                     <div class="text-[11px] text-slate-400 font-semibold mb-1 uppercase tracking-widest relative z-10">Asking Price</div>
                     <div class="text-3xl font-bold text-white relative z-10 tracking-tight" id="detailPrice">-</div>
                 </div>
 
-                <!-- 🏠 Specs Section -->
                 <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center"><i class="fa-solid fa-layer-group text-slate-400 dark:text-slate-500 mr-2"></i> Property Details</h3>
                 <div class="bg-white/50 dark:bg-slate-800/40 rounded-3xl p-5 border border-white dark:border-slate-700 shadow-sm mb-6 grid grid-cols-2 gap-y-5 gap-x-3 text-sm">
                     <div>
@@ -267,7 +245,6 @@
                     </div>
                 </div>
 
-                <!-- 👤 Owner Section -->
                 <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center mt-2"><i class="fa-regular fa-id-badge text-slate-400 dark:text-slate-500 mr-2"></i> Owner Information</h3>
                 
                 <div class="bg-white/60 dark:bg-slate-800/40 rounded-3xl border border-white dark:border-slate-700 shadow-sm overflow-hidden">
@@ -304,17 +281,18 @@
                 </div>
             </div>
 
-            <!-- Sticky Bottom Actions -->
-            <div class="absolute bottom-0 left-0 right-0 p-5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.3)] pb-safe rounded-b-[32px]">
-                <a id="actionCallBtn" href="#" class="w-full flex items-center justify-center py-4 bg-slate-900 dark:bg-indigo-600 text-white rounded-2xl font-semibold hover:bg-black dark:hover:bg-indigo-500 transition-all shadow-lg shadow-slate-900/20 dark:shadow-indigo-900/30 text-base active:scale-[0.98]">
-                    <i class="fa-solid fa-phone-volume mr-2.5"></i> Call Owner
+            <div class="absolute bottom-0 left-0 right-0 p-5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800 shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.05)] dark:shadow-[0_-10px_40px_-10px_rgba(0,0,0,0.3)] pb-safe rounded-b-[32px] flex gap-3">
+                <a id="actionCallBtn" href="#" class="flex-1 flex items-center justify-center py-4 bg-slate-900 dark:bg-indigo-600 text-white rounded-2xl font-semibold hover:bg-black dark:hover:bg-indigo-500 transition-all shadow-lg shadow-slate-900/20 dark:shadow-indigo-900/30 text-base active:scale-[0.98]">
+                    <i class="fa-solid fa-phone-volume mr-2.5"></i> Call
+                </a>
+                <a id="actionMapBtn" href="#" target="_blank" class="flex-1 flex items-center justify-center py-4 bg-blue-600 dark:bg-blue-500 text-white rounded-2xl font-semibold hover:bg-blue-700 dark:hover:bg-blue-600 transition-all shadow-lg shadow-blue-600/20 dark:shadow-blue-900/30 text-base active:scale-[0.98]">
+                    <i class="fa-solid fa-map-location-dot mr-2.5"></i> Maps
                 </a>
             </div>
 
         </div>
     </div>
 
-    <!-- Modal ตั้งค่า (Glassmorphism) -->
     <div id="settingsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-slate-900/40 dark:bg-slate-900/60 backdrop-blur-sm" onclick="closeModal('settingsModal')"></div>
         <div class="glass-panel bg-white/90 dark:bg-slate-800/90 rounded-[32px] max-w-sm w-full p-7 relative z-10 animate-slide-up shadow-2xl border border-white dark:border-slate-700">
@@ -335,7 +313,6 @@
         </div>
     </div>
 
-    <!-- Toast Notification -->
     <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 bg-slate-900/95 dark:bg-slate-800/95 backdrop-blur-md text-white px-5 py-3.5 rounded-2xl shadow-2xl z-[70] text-sm font-semibold transition-all duration-400 opacity-0 pointer-events-none -translate-y-6 flex items-center border border-slate-700/50">
         <div id="toastIcon" class="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center mr-3 shrink-0">
             <i class="fa-solid fa-check text-emerald-400 text-xs"></i>
@@ -358,7 +335,6 @@
             }
         });
 
-        // 🌙 ระบบ Dark Mode
         function initTheme() {
             const savedTheme = localStorage.getItem('prime_estate_theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -381,7 +357,6 @@
         function updateThemeIcon(isDark) {
             const icon = document.getElementById('themeIcon');
             if(icon) {
-                // พระอาทิตย์สีเหลือง / พระจันทร์สีเทาเข้ม
                 icon.className = isDark ? 'fa-solid fa-sun text-amber-400' : 'fa-solid fa-moon text-slate-500';
             }
         }
@@ -476,7 +451,6 @@
             return Number(num.toString().replace(/,/g, '')).toLocaleString('en-US');
         }
 
-        // คัมแบ็ค! เปลี่ยนหน่วยพื้นที่กลับเป็นภาษาไทย (ไร่, งาน, ตร.ว., ตร.ม.) 
         function buildSizeString(prop) {
             let landParts = [];
             if (prop.rai && prop.rai.toString().trim() !== '' && prop.rai != 0) landParts.push(`${prop.rai} ไร่`);
@@ -653,6 +627,15 @@
             } else {
                 actionCallBtn.href = "#";
                 actionCallBtn.classList.add('opacity-50', 'pointer-events-none');
+            }
+
+            const actionMapBtn = document.getElementById('actionMapBtn');
+            if (prop.mapLocation && prop.mapLocation.trim() !== '') {
+                actionMapBtn.href = prop.mapLocation;
+                actionMapBtn.classList.remove('hidden');
+            } else {
+                actionMapBtn.href = "#";
+                actionMapBtn.classList.add('hidden');
             }
 
             const modal = document.getElementById('detailsModal');
