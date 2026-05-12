@@ -78,13 +78,18 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        .status-sale { background: rgba(220, 252, 231, 0.8); color: #166534; border: 1px solid rgba(187, 247, 208, 0.8); }
-        .status-rent { background: rgba(219, 234, 254, 0.8); color: #1e40af; border: 1px solid rgba(191, 219, 254, 0.8); }
-        .status-other { background: rgba(243, 244, 246, 0.8); color: #374151; border: 1px solid rgba(229, 231, 235, 0.8); }
+        /* Updated Status Colors */
+        .status-green { background: rgba(220, 252, 231, 0.8); color: #166534; border: 1px solid rgba(187, 247, 208, 0.8); }
+        .status-red { background: rgba(254, 226, 226, 0.8); color: #991b1b; border: 1px solid rgba(254, 202, 202, 0.8); }
+        .status-grey { background: rgba(243, 244, 246, 0.8); color: #4b5563; border: 1px solid rgba(229, 231, 235, 0.8); }
+        .status-blue { background: rgba(219, 234, 254, 0.8); color: #1e40af; border: 1px solid rgba(191, 219, 254, 0.8); }
+        .status-orange { background: rgba(255, 237, 213, 0.8); color: #9a3412; border: 1px solid rgba(253, 186, 116, 0.8); }
         
-        .dark .status-sale { background: rgba(6, 78, 59, 0.4); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .dark .status-rent { background: rgba(30, 58, 138, 0.4); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
-        .dark .status-other { background: rgba(55, 65, 81, 0.4); color: #d1d5db; border: 1px solid rgba(107, 114, 128, 0.3); }
+        .dark .status-green { background: rgba(6, 78, 59, 0.4); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .dark .status-red { background: rgba(127, 29, 29, 0.4); color: #fca5a5; border: 1px solid rgba(185, 28, 28, 0.3); }
+        .dark .status-grey { background: rgba(55, 65, 81, 0.4); color: #d1d5db; border: 1px solid rgba(107, 114, 128, 0.3); }
+        .dark .status-blue { background: rgba(30, 58, 138, 0.4); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.3); }
+        .dark .status-orange { background: rgba(124, 45, 18, 0.4); color: #fdba74; border: 1px solid rgba(234, 88, 12, 0.3); }
     </style>
 </head>
 <body class="bg-[#f8fafc] dark:bg-slate-950 text-slate-800 dark:text-slate-200 pb-10 relative min-h-screen overflow-x-hidden transition-colors duration-300">
@@ -111,6 +116,9 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
+                <button id="headerBookmarkBtn" onclick="toggleBookmarkFilter()" class="bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 rounded-full w-10 h-10 flex items-center justify-center transition-all border border-slate-200 dark:border-slate-700 shadow-sm text-slate-600 dark:text-slate-300 relative">
+                    <i id="bookmarkFilterIcon" class="fa-regular fa-bookmark"></i>
+                </button>
                 <button onclick="toggleDarkMode()" class="bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 rounded-full w-10 h-10 flex items-center justify-center transition-all border border-slate-200 dark:border-slate-700 shadow-sm text-slate-600 dark:text-slate-300">
                     <i id="themeIcon" class="fa-solid fa-moon"></i>
                 </button>
@@ -120,7 +128,7 @@
             </div>
         </div>
         
-        <div class="px-5 pb-4">
+        <div class="px-5 pb-2">
             <div class="relative bg-white/50 dark:bg-slate-800/50 rounded-2xl border border-white dark:border-slate-700 shadow-inner overflow-hidden flex items-center focus-within:bg-white/80 dark:focus-within:bg-slate-800 transition-colors focus-within:ring-2 focus-within:ring-slate-900/10 dark:focus-within:ring-white/10">
                 <div class="pl-4 text-slate-400 dark:text-slate-500">
                     <i class="fa-solid fa-magnifying-glass"></i>
@@ -129,6 +137,19 @@
                 <button id="clearSearchBtn" onclick="clearSearch()" class="pr-4 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hidden transition-colors">
                     <i class="fa-solid fa-circle-xmark"></i>
                 </button>
+            </div>
+        </div>
+
+        <!-- NEW: Filters Section -->
+        <div class="px-5 pb-3 space-y-2.5">
+            <!-- Type Filters Container -->
+            <div class="flex overflow-x-auto no-scrollbar gap-2 pb-1" id="typeFiltersContainer">
+                <!-- Javascript will inject type chips here -->
+            </div>
+            
+            <!-- Status Filters Container -->
+            <div class="flex overflow-x-auto no-scrollbar gap-2 pb-1" id="statusFiltersContainer">
+                <!-- Javascript will inject status chips here -->
             </div>
         </div>
         
@@ -322,12 +343,23 @@
 
     <script>
         const SETTINGS_KEY = 'prime_estate_settings'; 
+        const BOOKMARKS_KEY = 'prime_estate_bookmarks';
         let propertiesData = [];
         let appSettings = { apiUrl: '' };
+        
+        // New State Variables for Filters
+        let bookmarkedIds = JSON.parse(localStorage.getItem(BOOKMARKS_KEY) || '[]');
+        let activeStatus = '';
+        let activeType = '';
+        let showingBookmarks = false;
+
+        const FILTER_STATUSES = ['available', 'cancel', 'rented', 'resale down payment', 'sale', 'sale & available', 'sale with tenant', 'sold'];
+        const FILTER_TYPES = ['Apartment', 'commercial building', 'condo', 'factory', 'home office', 'hostel', 'hotel', 'house', 'house & land', 'land', 'office', 'penthouse', 'townhome', 'townhouse', 'warehouse', 'semi-detached house', 'resort'];
         
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
             loadSettings();
+            initFiltersUI(); // Setup the new UI for filters
             setupSearch();
             if (appSettings.apiUrl) fetchData();
             else {
@@ -388,6 +420,118 @@
             fetchData(true);
         }
 
+        // --- NEW: Filters Logic & UI ---
+        function initFiltersUI() {
+            const typeContainer = document.getElementById('typeFiltersContainer');
+            const statusContainer = document.getElementById('statusFiltersContainer');
+            
+            // Generate Type Chips
+            let typeHtml = `<button onclick="setTypeFilter('')" class="${!activeType ? 'bg-slate-900 text-white dark:bg-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors shadow-sm">All Types</button>`;
+            FILTER_TYPES.forEach(t => {
+                const isActive = activeType === t.toLowerCase();
+                const activeClass = isActive ? 'bg-slate-900 text-white dark:bg-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700';
+                typeHtml += `<button onclick="setTypeFilter('${t}')" class="${activeClass} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap capitalize transition-colors shadow-sm">${t}</button>`;
+            });
+            typeContainer.innerHTML = typeHtml;
+
+            // Generate Status Chips
+            let statusHtml = `<button onclick="setStatusFilter('')" class="${!activeStatus ? 'bg-slate-900 text-white dark:bg-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors shadow-sm">All Status</button>`;
+            FILTER_STATUSES.forEach(s => {
+                const isActive = activeStatus === s.toLowerCase();
+                const activeClass = isActive ? 'bg-slate-900 text-white dark:bg-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700';
+                statusHtml += `<button onclick="setStatusFilter('${s}')" class="${activeClass} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap capitalize transition-colors shadow-sm">${s}</button>`;
+            });
+            statusContainer.innerHTML = statusHtml;
+        }
+
+        function setTypeFilter(type) {
+            activeType = type.toLowerCase();
+            initFiltersUI(); // Re-render chips for active state
+            applyFilters();
+        }
+
+        function setStatusFilter(status) {
+            activeStatus = status.toLowerCase();
+            initFiltersUI(); // Re-render chips for active state
+            applyFilters();
+        }
+
+        function toggleBookmarkFilter() {
+            showingBookmarks = !showingBookmarks;
+            const btn = document.getElementById('headerBookmarkBtn');
+            const icon = document.getElementById('bookmarkFilterIcon');
+            
+            if(showingBookmarks) {
+                btn.className = "bg-amber-100 dark:bg-amber-900/40 hover:bg-amber-200 dark:hover:bg-amber-900/60 rounded-full w-10 h-10 flex items-center justify-center transition-all border border-amber-200 dark:border-amber-700/50 shadow-sm text-amber-600 dark:text-amber-400 relative";
+                icon.className = "fa-solid fa-bookmark";
+            } else {
+                btn.className = "bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 rounded-full w-10 h-10 flex items-center justify-center transition-all border border-slate-200 dark:border-slate-700 shadow-sm text-slate-600 dark:text-slate-300 relative";
+                icon.className = "fa-regular fa-bookmark";
+            }
+            applyFilters();
+        }
+
+        function toggleBookmarkItem(event, id) {
+            event.stopPropagation();
+            const index = bookmarkedIds.indexOf(id);
+            if (index > -1) {
+                bookmarkedIds.splice(index, 1);
+                showToast('Removed from saved', 'success');
+            } else {
+                bookmarkedIds.push(id);
+                showToast('Property saved!', 'success');
+            }
+            localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bookmarkedIds));
+            
+            // Only re-render if we are currently filtering by bookmarks to remove it immediately
+            if (showingBookmarks) {
+                applyFilters();
+            } else {
+                // Otherwise just update the icon on the card
+                const iconElem = event.currentTarget.querySelector('i');
+                if(index > -1) {
+                    iconElem.className = 'fa-regular fa-bookmark';
+                    event.currentTarget.classList.replace('text-amber-400', 'text-slate-300');
+                    event.currentTarget.classList.replace('dark:text-amber-400', 'dark:text-slate-600');
+                } else {
+                    iconElem.className = 'fa-solid fa-bookmark';
+                    event.currentTarget.classList.replace('text-slate-300', 'text-amber-400');
+                    event.currentTarget.classList.replace('dark:text-slate-600', 'dark:text-amber-400');
+                }
+            }
+        }
+
+        // The Master Filter Function
+        function applyFilters() {
+            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+            let filtered = propertiesData;
+
+            // 1. Bookmark Filter
+            if (showingBookmarks) {
+                filtered = filtered.filter(p => bookmarkedIds.includes(p.id));
+            }
+
+            // 2. Type Filter
+            if (activeType) {
+                filtered = filtered.filter(p => (p.type || '').toLowerCase() === activeType);
+            }
+
+            // 3. Status Filter
+            if (activeStatus) {
+                filtered = filtered.filter(p => (p.status || '').toLowerCase() === activeStatus);
+            }
+
+            // 4. Keyword Search
+            if (keyword !== '') {
+                filtered = filtered.filter(prop => {
+                    const str = Object.values(prop).join(' ').toLowerCase();
+                    return str.includes(keyword);
+                });
+            }
+
+            renderList(filtered);
+        }
+
         async function fetchData(forceRefresh = false) {
             if (!appSettings.apiUrl) return;
 
@@ -422,7 +566,7 @@
 
                 if (result && result.status === 'success') {
                     propertiesData = result.data;
-                    renderList(propertiesData);
+                    applyFilters(); // Apply filters immediately upon loading
                     if(forceRefresh) showToast('Portfolio synced successfully');
                 } else {
                     throw new Error(result ? result.message : 'Invalid data received from server');
@@ -473,11 +617,14 @@
             return '-';
         }
 
+        // Updated Colors matching meaning
         function getStatusColor(status) {
             const s = (status || '').toLowerCase();
-            if(s.includes('sale')) return 'status-sale';
-            if(s.includes('rent')) return 'status-rent';
-            return 'status-other';
+            if(s.includes('sold') || s.includes('cancel')) return 'status-grey';
+            if(s.includes('rented') || s.includes('with tenant')) return 'status-red';
+            if(s.includes('resale') || s.includes('down payment')) return 'status-orange';
+            if(s.includes('sale') || s.includes('available')) return 'status-green';
+            return 'status-blue';
         }
 
         function renderList(dataArray) {
@@ -503,6 +650,10 @@
                 
                 const ownerDisplay = prop.ownerName ? prop.ownerName : 'Unknown Owner';
 
+                const isBookmarked = bookmarkedIds.includes(prop.id);
+                const bookmarkIconClass = isBookmarked ? 'fa-solid' : 'fa-regular';
+                const bookmarkColorClass = isBookmarked ? 'text-amber-400 dark:text-amber-400' : 'text-slate-300 dark:text-slate-600';
+
                 let specHtml = '';
                 if(prop.bed || prop.bath) specHtml += `<span class="mr-4 flex items-center"><i class="fa-solid fa-bed text-slate-300 dark:text-slate-500 mr-1.5"></i> ${prop.bed||0} <i class="fa-solid fa-bath text-slate-300 dark:text-slate-500 ml-2 mr-1.5"></i> ${prop.bath||0}</span>`;
                 if(sizeStr !== '-') specHtml += `<span class="flex items-center"><i class="fa-solid fa-ruler-combined text-slate-300 dark:text-slate-500 mr-1.5"></i> ${sizeStr}</span>`;
@@ -514,6 +665,11 @@
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest ${statusColorClass} shadow-sm">${prop.status || 'OTHER'}</span>
                                 <span class="text-[11px] text-slate-400 dark:text-slate-500 font-mono tracking-wider">${prop.code || ''}</span>
+                                
+                                <!-- New: Bookmark Icon inline -->
+                                <button onclick="toggleBookmarkItem(event, ${prop.id})" class="ml-auto text-lg ${bookmarkColorClass} hover:text-amber-400 dark:hover:text-amber-400 transition-colors">
+                                    <i class="${bookmarkIconClass} fa-bookmark"></i>
+                                </button>
                             </div>
                             
                             <h3 class="font-bold text-slate-800 dark:text-slate-100 text-base leading-tight line-clamp-2">
@@ -556,15 +712,8 @@
                 if (keyword.length > 0) clearBtn.classList.remove('hidden');
                 else clearBtn.classList.add('hidden');
 
-                if (keyword === '') {
-                    renderList(propertiesData);
-                } else {
-                    const filtered = propertiesData.filter(prop => {
-                        const str = Object.values(prop).join(' ').toLowerCase();
-                        return str.includes(keyword);
-                    });
-                    renderList(filtered);
-                }
+                // Replaced inline filter with global applyFilters
+                applyFilters();
             });
         }
 
@@ -572,7 +721,7 @@
             const searchInput = document.getElementById('searchInput');
             searchInput.value = '';
             document.getElementById('clearSearchBtn').classList.add('hidden');
-            renderList(propertiesData);
+            applyFilters();
             searchInput.focus();
         }
 
