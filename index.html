@@ -352,9 +352,6 @@
         let activeStatus = '';
         let activeType = '';
         let showingBookmarks = false;
-
-        const FILTER_STATUSES = ['available', 'cancel', 'rented', 'resale down payment', 'sale', 'sale & available', 'sale with tenant', 'sold'];
-        const FILTER_TYPES = ['Apartment', 'commercial building', 'condo', 'factory', 'home office', 'hostel', 'hotel', 'house', 'house & land', 'land', 'office', 'penthouse', 'townhome', 'townhouse', 'warehouse', 'semi-detached house', 'resort'];
         
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
@@ -425,10 +422,14 @@
             const typeContainer = document.getElementById('typeFiltersContainer');
             const statusContainer = document.getElementById('statusFiltersContainer');
             
+            // Extract dynamic unique lists from actual loaded data
+            const availableTypes = [...new Set(propertiesData.map(p => (p.type || '').toLowerCase().trim()))].filter(Boolean).sort();
+            const availableStatuses = [...new Set(propertiesData.map(p => (p.status || '').toLowerCase().trim()))].filter(Boolean).sort();
+            
             // Generate Type Chips
             let typeHtml = `<button onclick="setTypeFilter('')" class="${!activeType ? 'bg-slate-900 text-white dark:bg-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors shadow-sm">All Types</button>`;
-            FILTER_TYPES.forEach(t => {
-                const isActive = activeType === t.toLowerCase();
+            availableTypes.forEach(t => {
+                const isActive = activeType === t;
                 const activeClass = isActive ? 'bg-slate-900 text-white dark:bg-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700';
                 typeHtml += `<button onclick="setTypeFilter('${t}')" class="${activeClass} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap capitalize transition-colors shadow-sm">${t}</button>`;
             });
@@ -436,8 +437,8 @@
 
             // Generate Status Chips
             let statusHtml = `<button onclick="setStatusFilter('')" class="${!activeStatus ? 'bg-slate-900 text-white dark:bg-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors shadow-sm">All Status</button>`;
-            FILTER_STATUSES.forEach(s => {
-                const isActive = activeStatus === s.toLowerCase();
+            availableStatuses.forEach(s => {
+                const isActive = activeStatus === s;
                 const activeClass = isActive ? 'bg-slate-900 text-white dark:bg-indigo-500' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700';
                 statusHtml += `<button onclick="setStatusFilter('${s}')" class="${activeClass} px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap capitalize transition-colors shadow-sm">${s}</button>`;
             });
@@ -566,6 +567,7 @@
 
                 if (result && result.status === 'success') {
                     propertiesData = result.data;
+                    initFiltersUI(); // Re-render filter chips dynamically based on new data
                     applyFilters(); // Apply filters immediately upon loading
                     if(forceRefresh) showToast('Portfolio synced successfully');
                 } else {
